@@ -1,4 +1,6 @@
 import pygame, random, sys
+from classes import *
+from levels import *
 
 #Use 2D vectors
 vector = pygame.math.Vector2
@@ -17,184 +19,6 @@ FPS = 60
 clock = pygame.time.Clock()
 tan = random.randint(1,5)
 
-#Define Classes
-class Game():
-    """A class to manage gameplay"""
-
-    def __init__(self):
-        """Initialize the game"""
-        pass
-
-    def update(self):
-        """Update the game"""
-        pass
-
-    def draw(self):
-        """Draw the game HUD"""
-        pass
-
-    def add_zombie(self):
-        """Add a zombie to the game"""
-        pass
-
-    def check_collisions(self):
-        """Check collisions that affect gameplay"""
-        pass
-
-    def check_round_completion(self):
-        """Check if the player survived a single night"""
-        pass
-
-    def check_game_over(self):
-        """Check to see if the player lost the game"""
-        pass
-
-    def start_new_round(self):
-        """Start a new night"""
-        pass
-
-    def pause_game(self):
-        """Pause the game"""
-        pass
-
-    def reset_game(self):
-        "Reset the game"
-        pass
-
-class Tile(pygame.sprite.Sprite):
-    """A class to represent a 32x32 pixel area in our display"""
-
-    def __init__(self):
-        """Initialize the tile"""
-        pass
-
-class Player(pygame.sprite.Sprite):
-    """A class the user can control"""
-
-    def __init__(self):
-        """Initialize the player"""
-        pass
-
-    def update(self):
-        """Update the player"""
-        pass
-
-    def move(self):
-        """Move the player"""
-
-    def check_collisions(self):
-        """Check for collisions with platforms and portals"""
-        pass
-
-    def check_animations(self):
-        """Check to see if the jump/fire animations should run"""
-        pass
-
-    def jump(self):
-        """Jump upwards if on a platform"""
-        pass
-
-    def fire(self):
-        """Fire a projectile from sword"""
-        pass
-
-    def reset(self):
-        """reset the player's position"""
-        pass
-
-    def animate(self):
-        """Animate the player's actions"""
-        pass
-
-class Projectile(pygame.sprite.Sprite):
-    """A projectile launched by the player"""
-
-    def __init__(self):
-        """Initialize the projectile"""
-        pass
-
-    def update(self):
-        """Update the projectile"""
-        pass
-
-class Zombie(pygame.sprite.Sprite):
-    """A class to create enemy zombies that move across the screen"""
-
-    def __init__(self):
-        """Initialize the zombie"""
-        pass
-
-    def update(self):
-        """Update the zombie"""
-        pass
-
-    def move(self):
-        """Move the zombie"""
-
-    def check_collisions(self):
-        """Check for collisions with platforms and portals"""
-        pass
-
-    def check_animations(self):
-        """Check to see if the death/rise animations should run"""
-        pass
-
-    def animate(self):
-        """Animate the zombie's actions"""
-        pass
-
-class RubyMaker(pygame.sprite.Sprite):
-    """A tile that is animated. A ruby will be generated here"""
-
-    def __init__(self):
-        """Initialize the ruby maker"""
-        pass
-
-    def update(self):
-        """Update the ruby maker"""
-        pass
-
-    def animate(self):
-        """Animate the ruby maker"""
-        pass
-
-class Ruby(pygame.sprite.Sprite):
-    """A class the player must collect to earn points and health"""
-
-    def __init__(self):
-        """Initialize the ruby"""
-        pass
-
-    def update(self):
-        """Update the ruby"""
-        pass
-
-    def move(self):
-        """Move the ruby"""
-        pass
-
-    def check_collisions(self):
-        """Check to see if the ruby has collided with platforms and portals"""
-        pass
-
-    def animate(self):
-        """Animate the ruby"""
-        pass
-
-class Portal(pygame.sprite.Sprite):
-    """A class to create portals that will transport you if you collide with it"""
-
-    def __init__(self):
-        """Initialize the portal"""
-        pass
-
-    def update(self):
-        """Update the portal"""
-        pass
-
-    def animate(self):
-        """Animate the portal"""
-        pass
 
 #Create Sprite Groups
 main_tile_group = pygame.sprite.Group()
@@ -205,39 +29,35 @@ zombie_group = pygame.sprite.Group()
 portal_group = pygame.sprite.Group()
 ruby_group = pygame.sprite.Group()
 
-#Create Tile Map
-#0 -> no tile, 1 -> dirt, 2-5 -> platforms, 6 -> ruby maker, 7-8 -> platforms, 9 -> player
-#23 rows and 40 columns
-tile_map = [
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,0,0,0,0,0,0,0,0,0,0,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [4,4,4,4,4,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,4,4,4,4,4],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,5,0,0,0,0,0,0,0,0,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,4,4,5,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2],
-    [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-]
 
 #Generate tile objects from the tile map
 for row in range(len(tile_map)):
     for col in range(len(tile_map[row])):
-        pass
+        #Dirt tile
+        if tile_map[row][col] == 1:
+            Tile(col*32, row*32, 1, main_tile_group)
+        #Platform tiles
+        elif tile_map[row][col] == 2:
+            Tile(col*32, row*32, 2, main_tile_group, platform_group)
+        elif tile_map[row][col] == 3:
+            Tile(col*32, row*32, 3, main_tile_group, platform_group)
+        elif tile_map[row][col] == 4:
+            Tile(col*32, row*32, 4, main_tile_group, platform_group)
+        elif tile_map[row][col] == 5:
+            Tile(col*32, row*32, 5, main_tile_group, platform_group)
+        #Ruby Maker
+        elif tile_map[row][col] == 6:
+            RubyMaker(col*32, row*32, main_tile_group)
+        #Portals
+        elif tile_map[row][col] == 7:
+            pass
+        #Zombies
+        elif tile_map[row][col] == 8:
+            pass
+        #Player
+        elif tile_map[row][col] == 9:
+            pass
+
 
 
 #Load and resize the background
@@ -254,6 +74,10 @@ while running:
 
     #Blit the background to the screen
     display_surface.blit(bg_image, bg_rect)
+
+    ##Update our main tile group and draw our tiles
+    main_tile_group.update()
+    main_tile_group.draw(display_surface)
 
     #Update the display and tick the clock
     pygame.display.update()
