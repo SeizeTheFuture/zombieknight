@@ -1,6 +1,7 @@
 import pygame, random, sys
 from classes import *
 from levels import *
+from settings import *
 
 #Use 2D vectors
 vector = pygame.math.Vector2
@@ -8,14 +9,11 @@ vector = pygame.math.Vector2
 #Initialize pygame
 pygame.init()
 
-#Set the display surface (tile size is 32x32 so 1280/32 = 40 tiles wide, 736/32 = 23 tiles high
-WINDOW_WIDTH = 1280
-WINDOW_HEIGHT = 736
+#Set the display surface
 display_surface = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 pygame.display.set_caption("Zombie Knight")
 
-#Set the FPS and clock
-FPS = 60
+#Create the clock
 clock = pygame.time.Clock()
 tan = random.randint(1,5)
 
@@ -50,10 +48,10 @@ for row in range(len(tile_map)):
             RubyMaker(col*32, row*32, main_tile_group)
         #Portals
         elif tile_map[row][col] == 7:
-            pass
+            Portal(col*32, row*32, "green", portal_group)
         #Zombies
         elif tile_map[row][col] == 8:
-            pass
+            Portal(col*32, row*32, "purple", portal_group)
         #Player
         elif tile_map[row][col] == 9:
             pass
@@ -63,6 +61,12 @@ for row in range(len(tile_map)):
 #Load and resize the background
 bg_image = pygame.transform.scale(pygame.image.load("./zombie_knight_assets/images/background.png"), (1280, 736)).convert_alpha()
 bg_rect = bg_image.get_rect(topleft = (0,0))
+
+#Create a player object
+player = Player()
+
+#Create game object
+game = Game(player, display_surface)
 
 #The main game loop
 running = True
@@ -78,6 +82,14 @@ while running:
     ##Update our main tile group and draw our tiles
     main_tile_group.update()
     main_tile_group.draw(display_surface)
+
+    #Update our portal tile group and draw them
+    portal_group.update()
+    portal_group.draw(display_surface)
+
+    #Update and draw the HUD
+    game.update()
+    game.draw()
 
     #Update the display and tick the clock
     pygame.display.update()

@@ -1,20 +1,63 @@
-import pygame
+import pygame, random
+from settings import *
 
 #Define Classes
 class Game():
     """A class to manage gameplay"""
 
-    def __init__(self):
+    def __init__(self, player, display_surface):
         """Initialize the game"""
-        pass
+        #Set constants
+        self.STARTING_ROUND_TIME = 30
+
+        #Set game values
+        self.score = 0
+        self.round_number = 1
+        self.frame_count = 0
+        self.round_time = self.STARTING_ROUND_TIME
+
+        #Load fonts
+        self.title_font = pygame.font.Font("./zombie_knight_assets/fonts/Poultrygeist.ttf", 48)
+        self.HUD_font = pygame.font.Font("./zombie_knight_assets/fonts/Pixel.ttf", 24)
+
+        #Connect the player object
+        self.player = player
+
+        #Connect the display surface
+        self.display_surface = display_surface
 
     def update(self):
         """Update the game"""
-        pass
+        #Update the round time every second
+        self.frame_count += 1
+        if self.frame_count % FPS == 0:
+            self.round_time -= 1
+            self.frame_count = 0
 
     def draw(self):
         """Draw the game HUD"""
-        pass
+        #Set text
+        self.score_text = self.HUD_font.render("Score: " + str(self.score), True, WHITE)
+        self.score_rect = self.score_text.get_rect(topleft= (10, WINDOW_HEIGHT - 50))
+
+        self.health_text = self.HUD_font.render("Health: " + str(self.player.health), True, WHITE)
+        self.health_rect = self.health_text.get_rect(topleft= (10, WINDOW_HEIGHT - 25))
+
+        self.title_text = self.title_font.render("Zombie Knight", True, GREEN)
+        self.title_rect = self.title_text.get_rect(center=(WINDOW_WIDTH//2, WINDOW_HEIGHT - 25))
+
+        self.round_text = self.HUD_font.render("Night: " + str(self.round_number), True, WHITE)
+        self.round_rect = self.round_text.get_rect(topright= (WINDOW_WIDTH - 10, WINDOW_HEIGHT - 50))
+
+        self.time_text = self.HUD_font.render("Sunrise in: " + str(self.round_time), True, WHITE)
+        self.time_rect = self.time_text.get_rect(topright = (WINDOW_WIDTH - 10, WINDOW_HEIGHT - 25))
+
+        #Draw the HUD
+        self.display_surface.blit(self.score_text, self.score_rect)
+        self.display_surface.blit(self.health_text, self.health_rect)
+        self.display_surface.blit(self.title_text, self.title_rect)
+        self.display_surface.blit(self.round_text, self.round_rect)
+        self.display_surface.blit(self.time_text, self.time_rect)
 
     def add_zombie(self):
         """Add a zombie to the game"""
@@ -71,7 +114,6 @@ class Tile(pygame.sprite.Sprite):
             self.image = pygame.transform.scale(pygame.image.load("./zombie_knight_assets/images/tiles/Tile (5).png"),
                                                 (32, 32)).convert_alpha()
             sub_group.add(self)
-
         #Add every tile to main group
         main_group.add(self)
 
@@ -83,7 +125,8 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self):
         """Initialize the player"""
-        pass
+        super().__init__()
+        self.health = 100
 
     def update(self):
         """Update the player"""
@@ -164,8 +207,8 @@ class RubyMaker(pygame.sprite.Sprite):
         self.rubymaker_sprites = []
 
         #Rotating Animation
-        for i in range (1, 11):
-            img = pygame.image.load(f"./zombie_knight_assets/images/ruby/crystal{i}.png").convert_alpha()
+        for i in range (7):
+            img = pygame.image.load(f"./zombie_knight_assets/images/ruby/tile00{i}.png").convert_alpha()
             img = pygame.transform.scale(img, (64,64))
             self.rubymaker_sprites.append(img)
 
@@ -216,14 +259,38 @@ class Ruby(pygame.sprite.Sprite):
 class Portal(pygame.sprite.Sprite):
     """A class to create portals that will transport you if you collide with it"""
 
-    def __init__(self):
+    def __init__(self, x, y, color, portal_group):
         """Initialize the portal"""
-        pass
+        super().__init__()
+
+        #Create animation frames list
+        self.portal_sprites = []
+
+        #Load portal animation frames
+        for i in range(22):
+            if i < 10:
+                img = pygame.image.load(f"./zombie_knight_assets/images/portals/{color}/tile00{i}.png").convert_alpha()
+            else:
+                img = pygame.image.load(f"./zombie_knight_assets/images/portals/{color}/tile0{i}.png").convert_alpha()
+            self.portal_sprites.append(img)
+
+        #Load an image and get a rect
+        self.current_sprite = random.randint(0,len(self.portal_sprites) - 1)
+        self.image = self.portal_sprites[self.current_sprite]
+        self.rect = self.image.get_rect(bottomleft = (x,y))
+
+        #Add to the portal group
+        portal_group.add(self)
 
     def update(self):
         """Update the portal"""
-        pass
+        self.animate(self.portal_sprites, .2)
 
-    def animate(self):
+    def animate(self, sprite_list, speed):
         """Animate the portal"""
-        pass
+        if self.current_sprite < len(sprite_list) - 1:
+            self.current_sprite += speed
+        else:
+            self.current_sprite = 0
+
+        self.image = sprite_list[int(self.current_sprite)]
