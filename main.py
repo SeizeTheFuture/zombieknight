@@ -237,6 +237,7 @@ tile_map = [
 #Generate tile objects from the tile map
 for row in range(len(tile_map)):
     for col in range(len(tile_map[row])):
+        pass
 
 
 #Load and resize the background
