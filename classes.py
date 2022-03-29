@@ -354,9 +354,79 @@ class Projectile(pygame.sprite.Sprite):
 class Zombie(pygame.sprite.Sprite):
     """A class to create enemy zombies that move across the screen"""
 
-    def __init__(self):
+    def __init__(self, platform_group, portal_group, min_speed, max_speed):
         """Initialize the zombie"""
-        pass
+        super().__init__()
+
+        #Set Constants
+        self.VERTICAL_ACCELERATION = 3 #Gravity
+        self.RISE_TIME = 2
+
+        #Animation Frames
+        self.walk_right_sprites = []
+        self.walk_left_sprites = []
+        self.die_right_sprites = []
+        self.die_left_sprites = []
+        self.rise_right_sprites = []
+        self.rise_left_sprites = []
+
+        #Randomly select zombie gender
+        gender = random.choice(["boy", "girl"])
+
+        #Load animation frames for walking, dying, and rising
+        for i in range(1,11):
+            img = pygame.image.load(
+                f"./zombie_knight_assets/images/zombie/{gender}/walk/Walk ({i}).png").convert_alpha()
+            self.walk_right_sprites.append(pygame.image.scale(img, (64,64)))
+            img = pygame.image.load(
+                f"./zombie_knight_assets/images/zombie/{gender}/walk/Walk ({i}).png").convert_alpha()
+            self.walk_left_sprites.append(pygame.transform.flip(pygame.image.scale(img, (64, 64)), True, False))
+            img = pygame.image.load(
+                f"./zombie_knight_assets/images/zombie/{gender}/dead/Dead ({i}).png").convert_alpha()
+            self.die_right_sprites.append(pygame.image.scale(img, (64,64)))
+            img = pygame.image.load(
+                f"./zombie_knight_assets/images/zombie/{gender}/dead/Dead ({i}).png").convert_alpha()
+            self.die_left_sprites.append(pygame.transform.flip(pygame.image.scale(img, (64, 64)), True, False))
+            img = pygame.image.load(
+                f"./zombie_knight_assets/images/zombie/{gender}/dead/Dead ({i}).png").convert_alpha()
+            self.rise_right_sprites.insert(0, pygame.image.scale(img, (64,64)))
+            img = pygame.image.load(
+                f"./zombie_knight_assets/images/zombie/{gender}/dead/Dead ({i}).png").convert_alpha()
+            self.rise_left_sprites.insert(0, pygame.transform.flip(pygame.image.scale(img, (64, 64)), True, False))
+
+        #Load an image and get the rect
+        self.direction = random.choice([-1, 1])
+
+        self.current_sprite = 0
+        if self.direction == -1:
+            self.image = self.walk_left_sprites[self.current_sprite]
+        else:
+            self.image = self.walk_right_sprites[self.current_sprite]
+        self.rect = self.image.get_rect(bottomleft = (random.randint(100, WINDOW_WIDTH-100), -100))
+
+        #Attach sprite groups
+        self.platform_group = platform_group
+        self.portal_group = portal_group
+
+        #Animation Booleans
+        self.animate_death = False
+        self.animate_rise = False
+
+        #Load sounds
+        self.hit_sound = pygame.mixer.Sound("./zombie_knight_assets/sounds/zombie_hit.wav")
+        self.kick_sound = pygame.mixer.Sound("./zombie_knight_assets/sounds/zombie_kick.wav")
+        self.portal_sound = pygame.mixer.Sound("./zombie_knight_assets/sounds/portal_sound.wav")
+
+        #Set Kinematics Vectors
+        self.position = vector(self.rect.x, self.rect.y)
+        self.velocity = vector(random.randint(min_speed, max_speed) * self.direction, 0)
+        self.acceleration = vector(0, self.VERTICAL_ACCELERATION)
+
+        #Set Initial Values
+        self.is_dead = False
+        self.round_time = 0
+        self.frame_count = 0
+
 
     def update(self):
         """Update the zombie"""
