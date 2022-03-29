@@ -48,13 +48,13 @@ for row in range(len(tile_map)):
             RubyMaker(col*32, row*32, main_tile_group)
         #Portals
         elif tile_map[row][col] == 7:
-            Portal(col*32, row*32, "green", portal_group)
-        #Zombies
+            Portal(col*32, row*32 + 32, "green", portal_group)
         elif tile_map[row][col] == 8:
-            Portal(col*32, row*32, "purple", portal_group)
+            Portal(col*32, row*32 + 32, "purple", portal_group)
         #Player
         elif tile_map[row][col] == 9:
-            pass
+            player = Player(col*32 - 32, row*32 + 32, platform_group, portal_group, projectile_group)
+            player_group.add(player)
 
 
 
@@ -62,11 +62,12 @@ for row in range(len(tile_map)):
 bg_image = pygame.transform.scale(pygame.image.load("./zombie_knight_assets/images/background.png"), (1280, 736)).convert_alpha()
 bg_rect = bg_image.get_rect(topleft = (0,0))
 
-#Create a player object
-player = Player()
-
 #Create game object
 game = Game(player, display_surface)
+
+#Load and play music
+pygame.mixer.music.load("./zombie_knight_assets/sounds/alex-productions-cyberpunk-computer-game-idra.mp3")
+pygame.mixer.music.play(-1, 0, 0)
 
 #The main game loop
 running = True
@@ -75,6 +76,10 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.KEYDOWN:
+            #The player wants to jump
+            if event.key == pygame.K_SPACE:
+                player.jump()
 
     #Blit the background to the screen
     display_surface.blit(bg_image, bg_rect)
@@ -86,6 +91,10 @@ while running:
     #Update our portal tile group and draw them
     portal_group.update()
     portal_group.draw(display_surface)
+
+    #Update and draw the player
+    player_group.update()
+    player_group.draw(display_surface)
 
     #Update and draw the HUD
     game.update()
