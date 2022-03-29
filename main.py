@@ -80,6 +80,8 @@ while running:
             #The player wants to jump
             if event.key == pygame.K_SPACE:
                 player.jump()
+            if event.key == pygame.K_UP:
+                player.fire()
 
     #Blit the background to the screen
     display_surface.blit(bg_image, bg_rect)
@@ -95,6 +97,10 @@ while running:
     #Update and draw the player
     player_group.update()
     player_group.draw(display_surface)
+
+    #Update and draw the projectiles
+    projectile_group.update()
+    projectile_group.draw(display_surface)
 
     #Update and draw the HUD
     game.update()

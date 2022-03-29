@@ -149,28 +149,28 @@ class Player(pygame.sprite.Sprite):
         #Moving
         for i in range (1,11):
             img = pygame.transform.scale(
-                pygame.image.load(f"./zombie_knight_assets/images/player/run/Run ({i}).png"), (64,64))
+                pygame.image.load(f"./zombie_knight_assets/images/player/run/Run ({i}).png"), (64,64)).convert_alpha()
             self.move_right_sprites.append(img)
             self.move_left_sprites.append(pygame.transform.flip(img, True, False))
 
         #Idling
         for i in range (1,11):
             img = pygame.transform.scale(
-                pygame.image.load(f"./zombie_knight_assets/images/player/idle/Idle ({i}).png"), (64, 64))
+                pygame.image.load(f"./zombie_knight_assets/images/player/idle/Idle ({i}).png"), (64, 64)).convert_alpha()
             self.idle_right_sprites.append(img)
             self.idle_left_sprites.append(pygame.transform.flip(img, True, False))
 
         #Jumping
         for i in range (1,11):
             img = pygame.transform.scale(
-                pygame.image.load(f"./zombie_knight_assets/images/player/jump/Jump ({i}).png"), (64, 64))
+                pygame.image.load(f"./zombie_knight_assets/images/player/jump/Jump ({i}).png"), (64, 64)).convert_alpha()
             self.jump_right_sprites.append(img)
             self.jump_left_sprites.append(pygame.transform.flip(img, True, False))
 
         #Attacking
         for i in range (1,11):
             img = pygame.transform.scale(
-                pygame.image.load(f"./zombie_knight_assets/images/player/attack/Attack ({i}).png"), (64, 64))
+                pygame.image.load(f"./zombie_knight_assets/images/player/attack/Attack ({i}).png"), (64, 64)).convert_alpha()
             self.attack_right_sprites.append(img)
             self.attack_left_sprites.append(pygame.transform.flip(img, True, False))
 
@@ -219,8 +219,15 @@ class Player(pygame.sprite.Sprite):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] or keys[pygame.K_a]:
             self.acceleration.x = self.HORIZONTAL_ACCELERATION * -1
+            self.animate(self.move_left_sprites, .5)
         elif keys[pygame.K_RIGHT] or keys[pygame.K_d]:
             self.acceleration.x = self.HORIZONTAL_ACCELERATION
+            self.animate(self.move_right_sprites, .5)
+        else:
+            if self.velocity.x > 0:
+                self.animate(self.idle_right_sprites, .5)
+            else:
+                self.animate(self.idle_left_sprites, .5)
 
         #Calculate new kinematics values
         self.acceleration.x -= self.velocity.x*self.HORIZONTAL_FRICTION
@@ -271,36 +278,78 @@ class Player(pygame.sprite.Sprite):
 
     def check_animations(self):
         """Check to see if the jump/fire animations should run"""
-        pass
+        if self.animate_jump:
+            if self.velocity.x > 0:
+                self.animate(self.jump_right_sprites, .1)
+            else:
+                self.animate(self.jump_left_sprites, .1)
+        if self.animate_attack:
+            if self.velocity.x > 0:
+                self.animate(self.attack_right_sprites, .25)
+            else:
+                self.animate(self.attack_left_sprites, .1)
 
     def jump(self):
         """Jump upwards if on a platform"""
         if pygame.sprite.spritecollide(self, self.platform_group, False):
             self.jump_sound.play()
             self.velocity.y = self.VERTICAL_JUMP_SPEED
+        self.animate_jump = True
+
 
     def fire(self):
         """Fire a projectile from sword"""
-        pass
+        self.slash_sound.play()
+        slash = Projectile(self.rect.centerx, self.rect.centery, self.projectile_group, self)
+        self.animate_attack = True
 
     def reset(self):
         """reset the player's position"""
-        pass
+        self.position = vector(self.starting_x, self.starting_y)
+        self.rect.bottomleft = self.position
 
-    def animate(self):
+    def animate(self, sprite_list, speed):
         """Animate the player's actions"""
-        pass
+        if self.current_sprite < len(sprite_list) - 1:
+            self.current_sprite += speed
+        else:
+            self.current_sprite = 0
+            self.animate_jump = False
+            self.animate_attack = False
+
+        self.image = sprite_list[int(self.current_sprite)]
+
 
 class Projectile(pygame.sprite.Sprite):
     """A projectile launched by the player"""
 
-    def __init__(self):
+    def __init__(self, x, y, projectile_group, player):
         """Initialize the projectile"""
-        pass
+        super().__init__()
+
+        #Set constants
+        self.VELOCITY = 20
+        self.RANGE = 500
+
+        #Load image and get rect
+        img = pygame.image.load("./zombie_knight_assets/images/player/slash.png").convert_alpha()
+        if player.velocity.x > 0:
+            self.image = pygame.transform.scale(img, (32,32))
+        else:
+            self.image = pygame.transform.flip(pygame.transform.scale(img, (32,32)), True, False)
+            self.VELOCITY *= -1
+
+        self.rect = self.image.get_rect(center = (x,y))
+        self.starting_x = x
+        projectile_group.add(self)
+
+
 
     def update(self):
         """Update the projectile"""
-        pass
+        self.rect.x += self.VELOCITY
+        if abs(self.rect.x- self.starting_x) > self.RANGE:
+            self.kill()
 
 class Zombie(pygame.sprite.Sprite):
     """A class to create enemy zombies that move across the screen"""

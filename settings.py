@@ -3,7 +3,7 @@ WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 736
 
 #Set the FPS
-FPS = 60
+FPS = 40
 
 #Set colors
 WHITE = (255,255,255)
