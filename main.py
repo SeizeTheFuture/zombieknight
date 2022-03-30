@@ -63,7 +63,7 @@ bg_image = pygame.transform.scale(pygame.image.load("./zombie_knight_assets/imag
 bg_rect = bg_image.get_rect(topleft = (0,0))
 
 #Create game object
-game = Game(player, display_surface)
+game = Game(player, display_surface, zombie_group, platform_group, portal_group, projectile_group, ruby_group)
 
 #Load and play music
 pygame.mixer.music.load("./zombie_knight_assets/sounds/alex-productions-cyberpunk-computer-game-idra.mp3")
@@ -97,6 +97,10 @@ while running:
     #Update and draw the player
     player_group.update()
     player_group.draw(display_surface)
+
+    #Update and draw the zombie
+    zombie_group.update()
+    zombie_group.draw(display_surface)
 
     #Update and draw the projectiles
     projectile_group.update()

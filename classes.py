@@ -7,23 +7,30 @@ vector = pygame.math.Vector2
 class Game():
     """A class to manage gameplay"""
 
-    def __init__(self, player, display_surface):
+    def __init__(self, player, display_surface, zombie_group, platform_group, portal_group, projectile_group, ruby_group):
         """Initialize the game"""
         #Set constants
         self.STARTING_ROUND_TIME = 30
+        self.STARTING_ZOMBIE_CREATION_TIME = 5
 
         #Set game values
         self.score = 0
         self.round_number = 1
         self.frame_count = 0
         self.round_time = self.STARTING_ROUND_TIME
+        self.zombie_creation_time = self.STARTING_ZOMBIE_CREATION_TIME
 
         #Load fonts
         self.title_font = pygame.font.Font("./zombie_knight_assets/fonts/Poultrygeist.ttf", 48)
         self.HUD_font = pygame.font.Font("./zombie_knight_assets/fonts/Pixel.ttf", 24)
 
-        #Connect the player object
+        #Attach the player object
         self.player = player
+        self.zombie_group = zombie_group
+        self.platform_group = platform_group
+        self.portal_group = portal_group
+        self.projectile_group = projectile_group
+        self.ruby_group = ruby_group
 
         #Connect the display surface
         self.display_surface = display_surface
@@ -35,6 +42,12 @@ class Game():
         if self.frame_count % FPS == 0:
             self.round_time -= 1
             self.frame_count = 0
+
+        #Check for collisions
+        self.check_collisions()
+
+        #Add zombies when zombie creation time is met
+        self.add_zombie()
 
     def draw(self):
         """Draw the game HUD"""
@@ -63,11 +76,39 @@ class Game():
 
     def add_zombie(self):
         """Add a zombie to the game"""
-        pass
+        #Check to add a zombie every second
+        if self.frame_count % FPS == 0:
+            #Only add a zombie if zombie creation time has passed
+            if self.round_time % self.zombie_creation_time == 0:
+                zombie = Zombie(self.platform_group, self.portal_group, self.round_number, 5+self.round_number)
+                self.zombie_group.add(zombie)
 
     def check_collisions(self):
         """Check collisions that affect gameplay"""
-        pass
+        #See if any projectile in the projectile group hit any zombie in the zombie group
+        collision_dict = pygame.sprite.groupcollide(self.projectile_group, self.zombie_group, True, False)
+        if collision_dict:
+            for zombies in collision_dict.values():
+                for zombie in zombies:
+                    zombie.hit_sound.play()
+                    zombie.is_dead = True
+                    zombie.animate_death = True
+
+        #See if a player stomped a dead zombie to kill it or collided with a live zombie and takes damage
+        collision_list = pygame.sprite.spritecollide(self.player, self.zombie_group, False)
+        if collision_list:
+            for zombie in collision_list:
+                if zombie.is_dead:
+                    zombie.kick_sound.play()
+                    zombie.kill()
+                    self.score += 25
+                #If the zombie isn't dead
+                else:
+                    self.player.health -= 20
+                    self.player.hit_sound.play()
+                #Move the player so it doesn't continually take damage
+                    self.player.position.x += 192*zombie.direction
+                    self.player.rect.bottomleft = self.player.position
 
     def check_round_completion(self):
         """Check if the player survived a single night"""
@@ -265,7 +306,7 @@ class Player(pygame.sprite.Sprite):
             self.portal_sound.play()
             #Determine which new portal to move the player to
             if self.position.x > WINDOW_WIDTH//2:
-                self.position.x = 86
+                self.position.x = 100
             else:
                 self.position.x = WINDOW_WIDTH - 150
             if self.position.y > WINDOW_HEIGHT//2:
@@ -354,6 +395,47 @@ class Projectile(pygame.sprite.Sprite):
 class Zombie(pygame.sprite.Sprite):
     """A class to create enemy zombies that move across the screen"""
 
+    # Animation Frames
+    boy_walk_right_sprites = []
+    boy_walk_left_sprites = []
+    boy_die_right_sprites = []
+    boy_die_left_sprites = []
+    boy_rise_right_sprites = []
+    boy_rise_left_sprites = []
+    girl_walk_right_sprites = []
+    girl_walk_left_sprites = []
+    girl_die_right_sprites = []
+    girl_die_left_sprites = []
+    girl_rise_right_sprites = []
+    girl_rise_left_sprites = []
+
+    # Load animation frames for walking, dying, and rising
+    for i in range(1, 11):
+        img = pygame.image.load(f"./zombie_knight_assets/images/zombie/boy/walk/Walk ({i}).png")
+        boy_walk_right_sprites.append(pygame.transform.scale(img, (64, 64)))
+        img = pygame.image.load(f"./zombie_knight_assets/images/zombie/boy/walk/Walk ({i}).png")
+        boy_walk_left_sprites.append(pygame.transform.flip(pygame.transform.scale(img, (64, 64)), True, False))
+        img = pygame.image.load(f"./zombie_knight_assets/images/zombie/boy/dead/Dead ({i}).png")
+        boy_die_right_sprites.append(pygame.transform.scale(img, (64, 64)))
+        img = pygame.image.load(f"./zombie_knight_assets/images/zombie/boy/dead/Dead ({i}).png")
+        boy_die_left_sprites.append(pygame.transform.flip(pygame.transform.scale(img, (64, 64)), True, False))
+
+    boy_rise_right_sprites = boy_die_right_sprites[::-1]
+    boy_rise_left_sprites = boy_die_left_sprites[::-1]
+
+    for i in range(1, 11):
+        img = pygame.image.load(f"./zombie_knight_assets/images/zombie/girl/walk/Walk ({i}).png")
+        girl_walk_right_sprites.append(pygame.transform.scale(img, (64, 64)))
+        img = pygame.image.load(f"./zombie_knight_assets/images/zombie/girl/walk/Walk ({i}).png")
+        girl_walk_left_sprites.append(pygame.transform.flip(pygame.transform.scale(img, (64, 64)), True, False))
+        img = pygame.image.load(f"./zombie_knight_assets/images/zombie/girl/dead/Dead ({i}).png")
+        girl_die_right_sprites.append(pygame.transform.scale(img, (64, 64)))
+        img = pygame.image.load(f"./zombie_knight_assets/images/zombie/girl/dead/Dead ({i}).png")
+        girl_die_left_sprites.append(pygame.transform.flip(pygame.transform.scale(img, (64, 64)), True, False))
+
+    girl_rise_right_sprites = girl_die_right_sprites[::-1]
+    girl_rise_left_sprites = girl_die_left_sprites[::-1]
+
     def __init__(self, platform_group, portal_group, min_speed, max_speed):
         """Initialize the zombie"""
         super().__init__()
@@ -362,37 +444,38 @@ class Zombie(pygame.sprite.Sprite):
         self.VERTICAL_ACCELERATION = 3 #Gravity
         self.RISE_TIME = 2
 
-        #Animation Frames
-        self.walk_right_sprites = []
-        self.walk_left_sprites = []
-        self.die_right_sprites = []
-        self.die_left_sprites = []
-        self.rise_right_sprites = []
-        self.rise_left_sprites = []
-
-        #Randomly select zombie gender
+        # Randomly select zombie gender
         gender = random.choice(["boy", "girl"])
 
-        #Load animation frames for walking, dying, and rising
-        for i in range(1,11):
-            img = pygame.image.load(
-                f"./zombie_knight_assets/images/zombie/{gender}/walk/Walk ({i}).png").convert_alpha()
-            self.walk_right_sprites.append(pygame.image.scale(img, (64,64)))
-            img = pygame.image.load(
-                f"./zombie_knight_assets/images/zombie/{gender}/walk/Walk ({i}).png").convert_alpha()
-            self.walk_left_sprites.append(pygame.transform.flip(pygame.image.scale(img, (64, 64)), True, False))
-            img = pygame.image.load(
-                f"./zombie_knight_assets/images/zombie/{gender}/dead/Dead ({i}).png").convert_alpha()
-            self.die_right_sprites.append(pygame.image.scale(img, (64,64)))
-            img = pygame.image.load(
-                f"./zombie_knight_assets/images/zombie/{gender}/dead/Dead ({i}).png").convert_alpha()
-            self.die_left_sprites.append(pygame.transform.flip(pygame.image.scale(img, (64, 64)), True, False))
-            img = pygame.image.load(
-                f"./zombie_knight_assets/images/zombie/{gender}/dead/Dead ({i}).png").convert_alpha()
-            self.rise_right_sprites.insert(0, pygame.image.scale(img, (64,64)))
-            img = pygame.image.load(
-                f"./zombie_knight_assets/images/zombie/{gender}/dead/Dead ({i}).png").convert_alpha()
-            self.rise_left_sprites.insert(0, pygame.transform.flip(pygame.image.scale(img, (64, 64)), True, False))
+        #Attach Animation Frames
+        if gender == "boy":
+            self.walk_right_sprites = Zombie.boy_walk_right_sprites
+            self.walk_left_sprites = Zombie.boy_walk_left_sprites
+            self.die_right_sprites = Zombie.boy_die_right_sprites
+            self.die_left_sprites = Zombie.boy_die_left_sprites
+            self.rise_right_sprites = Zombie.boy_rise_right_sprites
+            self.rise_left_sprites = Zombie.boy_rise_left_sprites
+        else:
+            self.walk_right_sprites = Zombie.girl_walk_right_sprites
+            self.walk_left_sprites = Zombie.girl_walk_left_sprites
+            self.die_right_sprites = Zombie.girl_die_right_sprites
+            self.die_left_sprites = Zombie.girl_die_left_sprites
+            self.rise_right_sprites = Zombie.girl_rise_right_sprites
+            self.rise_left_sprites = Zombie.girl_rise_left_sprites
+
+        #Convert images once to improve load time each frame
+        for image in self.walk_right_sprites:
+            image.convert_alpha()
+        for image in self.walk_left_sprites:
+            image.convert_alpha()
+        for image in self.die_right_sprites:
+            image.convert_alpha()
+        for image in self.die_left_sprites:
+            image.convert_alpha()
+        for image in self.rise_right_sprites:
+            image.convert_alpha()
+        for image in self.rise_left_sprites:
+            image.convert_alpha()
 
         #Load an image and get the rect
         self.direction = random.choice([-1, 1])
@@ -430,22 +513,101 @@ class Zombie(pygame.sprite.Sprite):
 
     def update(self):
         """Update the zombie"""
-        pass
+        self.move()
+        self.check_collisions()
+        self.check_animations()
+
+        #Determine when the zombie should rise from the dead
+        if self.is_dead:
+            self.frame_count += 1
+            if self.frame_count % FPS == 0:
+                self.round_time += 1
+                if self.round_time == self.RISE_TIME:
+                    self.animate_rise = True
+                    #When the zombie died image index was final sprite in list, reset it
+                    self.current_sprite = 0
 
     def move(self):
         """Move the zombie"""
+        if not self.is_dead:
+            # Calculate new kinematics values
+            self.velocity += self.acceleration
+            self.position += self.velocity + 0.5 * self.acceleration
+
+            # Update the player rect based on kinematic calculations and add wraparound movement
+            if self.position.x < 0:
+                self.position.x = WINDOW_WIDTH
+            elif self.position.x > WINDOW_WIDTH:
+                self.position.x = 0
+
+            if self.direction > 0:
+                self.animate(self.walk_right_sprites, .5)
+            else:
+                self.animate(self.walk_left_sprites, .5)
+
+            self.rect.bottomleft = self.position
+        else:
+            #Make sure zombies still fall when dead
+            self.velocity.y += self.acceleration.y
+            self.position.y += self.velocity.y + 0.5 * self.acceleration.y
+            self.rect.bottomleft = self.position
 
     def check_collisions(self):
         """Check for collisions with platforms and portals"""
-        pass
+        # Collision check between zombie and platform when falling
+        collided_platforms = pygame.sprite.spritecollide(self, self.platform_group, False)
+        if collided_platforms:
+            self.position.y = collided_platforms[0].rect.top + 1
+            self.velocity.y = 0
+
+        # Collision check between zombie and portals
+        if pygame.sprite.spritecollide(self, self.portal_group, False):
+            self.portal_sound.play()
+            # Determine which new portal to move the zombie to
+            if self.position.x > WINDOW_WIDTH // 2:
+                self.position.x = 100
+            else:
+                self.position.x = WINDOW_WIDTH - 150
+            if self.position.y > WINDOW_HEIGHT // 2:
+                self.position.y = 64
+            else:
+                self.position.y = WINDOW_HEIGHT - 132
+
+            self.rect.bottomleft = self.position
+
+        # Check collisions between zombie and projectile
 
     def check_animations(self):
         """Check to see if the death/rise animations should run"""
-        pass
+        #Animate the zombie death
+        if self.animate_death == True:
+            if self.direction > 0:
+                self.animate(self.die_right_sprites, .1)
+            else:
+                self.animate(self.die_left_sprites, .1)
 
-    def animate(self):
+        if self.animate_rise == True:
+            if self.direction > 0 :
+                self.animate(self.rise_right_sprites, .1)
+            else:
+                self.animate(self.rise_left_sprites, .1)
+
+    def animate(self, sprite_list, speed):
         """Animate the zombie's actions"""
-        pass
+        if self.current_sprite < len(sprite_list) - 1:
+            self.current_sprite += speed
+        else:
+            self.current_sprite = 0
+            if self.animate_death:
+                self.animate_death = False
+                self.current_sprite = len(sprite_list) - 1
+            if self.animate_rise:
+                self.animate_rise = False
+                self.is_dead = False
+                self.frame_count = 0
+                self.round_time = 0
+
+        self.image = sprite_list[int(self.current_sprite)]
 
 class RubyMaker(pygame.sprite.Sprite):
     """A tile that is animated. A ruby will be generated here"""
