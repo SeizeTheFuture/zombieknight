@@ -21,7 +21,7 @@ tan = random.randint(1,5)
 #Create Sprite Groups
 main_tile_group = pygame.sprite.Group()
 platform_group = pygame.sprite.Group()
-player_group = pygame.sprite.Group()
+player_group = pygame.sprite.GroupSingle()
 projectile_group = pygame.sprite.Group()
 zombie_group = pygame.sprite.Group()
 portal_group = pygame.sprite.Group()
@@ -64,10 +64,7 @@ bg_rect = bg_image.get_rect(topleft = (0,0))
 
 #Create game object
 game = Game(player, display_surface, zombie_group, platform_group, portal_group, projectile_group, ruby_group)
-
-#Load and play music
-pygame.mixer.music.load("./zombie_knight_assets/sounds/alex-productions-cyberpunk-computer-game-idra.mp3")
-pygame.mixer.music.play(-1, 0, 0)
+game.pause_game("Zombie Knight", "Press 'Enter' to Begin")
 
 #The main game loop
 running = True
@@ -105,6 +102,10 @@ while running:
     #Update and draw the projectiles
     projectile_group.update()
     projectile_group.draw(display_surface)
+
+    #Update and draw the rubies
+    ruby_group.update()
+    ruby_group.draw(display_surface)
 
     #Update and draw the HUD
     game.update()
